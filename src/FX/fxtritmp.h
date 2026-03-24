@@ -155,7 +155,7 @@ static __inline void TAG(triangle) (GLcontext * ctx,
     */
 }
 
-static __inline void TAG(quad) (GLcontext * ctx,
+static __inline void TAG(quadfunc) (GLcontext * ctx,
 				GLuint e0, GLuint e1, GLuint e2, GLuint e3)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
@@ -379,7 +379,7 @@ static __inline void TAG(points) (GLcontext * ctx, GLuint first, GLuint last)
 static void TAG(init) (void)
 {
    rast_tab[IND].triangle = TAG(triangle);
-   rast_tab[IND].quad = TAG(quad);
+   rast_tab[IND].quadfunc = TAG(quadfunc);
    rast_tab[IND].line = TAG(line);
    rast_tab[IND].points = TAG(points);
 }

@@ -435,6 +435,37 @@ irix6-n32:
 	"MAKELIB = ../bin/mklib.ar-rcv" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
+# IRIX 6 n32 + 3Dfx Glide2x (Voodoo1/Voodoo2 hardware rendering)
+#
+# Prerequisites:
+#   - libglide2x.so installed: cd glide_irix/glide2x/sst1/glide/src && make install
+#     (installs to /usr/lib32/libglide2x.so)
+#   - Glide headers at /usr/sdd/3dfx_irix/glide_irix/glide2x/sst1/glide/src/
+#
+# Build:  make irix6-n32-fx
+# Output: lib32/libGL.a and lib32/libGLU.a
+#
+# The FX/Glide driver has no X11 dependency — Glide takes over the display
+# directly.  DRIVER_SOURCES is overridden to include only the FX sources,
+# excluding the X11 (X/) and SVGA drivers entirely.
+#
+# -woff 1174: variable declared but never referenced (Glide headers)
+irix6-n32-fx:
+	-mkdir lib32
+	if [ -d src ] ; then touch src/depend ; fi
+	if [ -d src ] ; then cd src && pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
+	"LIBDIR = ../lib32" \
+	"CC = cc" \
+	"CFLAGS = -n32 -mips3 -O3 -ansi -woff 1174,1209,1521 -I/usr/sdd/3dfx_irix/glide_irix/glide2x/sst1/glide/src" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"APP_LIB_DEPS = -L/usr/lib32 -lglide2x -lm" \
+	"DRIVER_SOURCES = FX/fxapi.c FX/fxdd.c FX/fxddspan.c FX/fxddtex.c FX/fxsetup.c FX/fxtexman.c FX/fxtris.c FX/fxvb.c FX/fxglidew.c" ; fi
+
 irix6-n32-dso:
 	pmake $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \

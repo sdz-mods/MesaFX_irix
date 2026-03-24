@@ -1,0 +1,463 @@
+#!smake
+#
+# Makefile.irixfx — Mesa 3.5 FX/Glide static libraries for IRIX 6.5
+#
+# Run from MesaFX_irix/src/:
+#   smake -f Makefile.irixfx GLIDE_ROOT=/path/to/glide_irix
+#
+# GLIDE_ROOT is the root of the glide_irix tree, e.g.:
+#   /usr/sdd/3dfx_irix/glide_irix
+#
+# The following paths are derived from it automatically:
+#   glide.h, sst1vid.h, etc. : $(GLIDE_ROOT)/glide2x/sst1/glide/src
+#   3dfx.h                   : $(GLIDE_ROOT)/swlibs/fxmisc
+#
+# Outputs:
+#   ../lib32/libGL.a    — Mesa core + 3Dfx FX driver
+#   ../lib32/libGLU.a   — Mesa GLU utilities
+#   ../lib32/libglut.a  — GLUT stub (FX/no-X11, from src-glut-fx/)
+#
+
+# --------------------------------------------------------------------------
+# Required — pass on the command line:
+#   smake -f Makefile.irixfx GLIDE_ROOT=/usr/sdd/3dfx_irix/glide_irix
+# --------------------------------------------------------------------------
+GLIDE_ROOT =
+GLIDE_INC  = $(GLIDE_ROOT)/glide2x/sst1/glide/src
+GLIDE_MISC = $(GLIDE_ROOT)/swlibs/fxmisc
+GLIDE_INIT = $(GLIDE_ROOT)/glide2x/sst1/init
+
+# --------------------------------------------------------------------------
+# Toolchain and flags
+# --------------------------------------------------------------------------
+CC     = cc
+CFLAGS = -n32 -mips4 -O3 -ansi -woff 1174,1209,1521
+
+INCDIR    = ../include
+LIBDIR    = ../lib32
+GL_LIB    = libGL.a
+GLU_LIB   = libGLU.a
+GLUT_LIB  = libglut.a
+
+GLU_SRCDIR  = ../src-glu
+GLUT_SRCDIR = ../src-glut-fx
+
+ALL_CFLAGS  = $(CFLAGS) -I. -I$(INCDIR) -I$(GLIDE_INC) -I$(GLIDE_MISC) -I$(GLIDE_INIT) -DFX
+GLU_CFLAGS  = $(CFLAGS) -I$(INCDIR) -I$(GLU_SRCDIR)
+GLUT_CFLAGS = $(CFLAGS) -I$(INCDIR) -I$(GLIDE_INC) -I$(GLIDE_MISC) -I$(GLIDE_INIT)
+
+# --------------------------------------------------------------------------
+# Core Mesa sources
+# --------------------------------------------------------------------------
+CORE_SRCS = \
+	api_arrayelt.c \
+	api_loopback.c \
+	api_noop.c \
+	api_validate.c \
+	accum.c \
+	attrib.c \
+	blend.c \
+	buffers.c \
+	clip.c \
+	colortab.c \
+	config.c \
+	context.c \
+	convolve.c \
+	debug.c \
+	depth.c \
+	dispatch.c \
+	dlist.c \
+	drawpix.c \
+	enable.c \
+	enums.c \
+	eval.c \
+	extensions.c \
+	feedback.c \
+	fog.c \
+	get.c \
+	glapi.c \
+	glthread.c \
+	hash.c \
+	hint.c \
+	histogram.c \
+	image.c \
+	imports.c \
+	light.c \
+	lines.c \
+	matrix.c \
+	mem.c \
+	mmath.c \
+	pixel.c \
+	points.c \
+	polygon.c \
+	rastpos.c \
+	state.c \
+	stencil.c \
+	texformat.c \
+	teximage.c \
+	texobj.c \
+	texstate.c \
+	texstore.c \
+	texutil.c \
+	varray.c \
+	vtxfmt.c \
+	math/m_debug_clip.c \
+	math/m_debug_norm.c \
+	math/m_debug_vertex.c \
+	math/m_debug_xform.c \
+	math/m_eval.c \
+	math/m_matrix.c \
+	math/m_translate.c \
+	math/m_vector.c \
+	math/m_vertices.c \
+	math/m_xform.c \
+	array_cache/ac_context.c \
+	array_cache/ac_import.c \
+	swrast/s_aaline.c \
+	swrast/s_aatriangle.c \
+	swrast/s_accum.c \
+	swrast/s_alpha.c \
+	swrast/s_alphabuf.c \
+	swrast/s_bitmap.c \
+	swrast/s_blend.c \
+	swrast/s_buffers.c \
+	swrast/s_copypix.c \
+	swrast/s_context.c \
+	swrast/s_depth.c \
+	swrast/s_drawpix.c \
+	swrast/s_feedback.c \
+	swrast/s_fog.c \
+	swrast/s_histogram.c \
+	swrast/s_imaging.c \
+	swrast/s_lines.c \
+	swrast/s_logic.c \
+	swrast/s_masking.c \
+	swrast/s_pb.c \
+	swrast/s_pixeltex.c \
+	swrast/s_points.c \
+	swrast/s_readpix.c \
+	swrast/s_scissor.c \
+	swrast/s_span.c \
+	swrast/s_stencil.c \
+	swrast/s_texture.c \
+	swrast/s_texstore.c \
+	swrast/s_triangle.c \
+	swrast/s_zoom.c \
+	swrast_setup/ss_context.c \
+	swrast_setup/ss_triangle.c \
+	swrast_setup/ss_vb.c \
+	swrast_setup/ss_interp.c \
+	tnl/t_array_api.c \
+	tnl/t_array_import.c \
+	tnl/t_context.c \
+	tnl/t_eval_api.c \
+	tnl/t_imm_alloc.c \
+	tnl/t_imm_api.c \
+	tnl/t_imm_debug.c \
+	tnl/t_imm_dlist.c \
+	tnl/t_imm_elt.c \
+	tnl/t_imm_eval.c \
+	tnl/t_imm_exec.c \
+	tnl/t_imm_fixup.c \
+	tnl/t_pipeline.c \
+	tnl/t_vb_fog.c \
+	tnl/t_vb_light.c \
+	tnl/t_vb_normals.c \
+	tnl/t_vb_points.c \
+	tnl/t_vb_render.c \
+	tnl/t_vb_texgen.c \
+	tnl/t_vb_texmat.c \
+	tnl/t_vb_vertex.c
+
+# --------------------------------------------------------------------------
+# 3Dfx Glide FX driver sources
+# --------------------------------------------------------------------------
+FX_SRCS = \
+	FX/fxapi.c \
+	FX/fxdd.c \
+	FX/fxddspan.c \
+	FX/fxddtex.c \
+	FX/fxsetup.c \
+	FX/fxtexman.c \
+	FX/fxtris.c \
+	FX/fxvb.c \
+	FX/fxglidew.c
+
+SRCS    = $(CORE_SRCS) $(FX_SRCS)
+OBJECTS = $(SRCS:.c=.o)
+
+# --------------------------------------------------------------------------
+# GLU sources  (compiled into ../src-glu/*.o)
+# --------------------------------------------------------------------------
+GLU_SRCS = \
+	glu.c \
+	mipmap.c \
+	nurbs.c \
+	nurbscrv.c \
+	nurbssrf.c \
+	nurbsutl.c \
+	polytest.c \
+	project.c \
+	quadric.c \
+	tess.c \
+	tesselat.c
+
+GLU_OBJECTS = \
+	$(GLU_SRCDIR)/glu.o \
+	$(GLU_SRCDIR)/mipmap.o \
+	$(GLU_SRCDIR)/nurbs.o \
+	$(GLU_SRCDIR)/nurbscrv.o \
+	$(GLU_SRCDIR)/nurbssrf.o \
+	$(GLU_SRCDIR)/nurbsutl.o \
+	$(GLU_SRCDIR)/polytest.o \
+	$(GLU_SRCDIR)/project.o \
+	$(GLU_SRCDIR)/quadric.o \
+	$(GLU_SRCDIR)/tess.o \
+	$(GLU_SRCDIR)/tesselat.o
+
+# --------------------------------------------------------------------------
+# GLUT sources  (compiled into ../src-glut-fx/*.o)
+# --------------------------------------------------------------------------
+GLUT_OBJECTS = $(GLUT_SRCDIR)/glut_fxmesa.o
+
+# --------------------------------------------------------------------------
+# Targets
+# --------------------------------------------------------------------------
+.PHONY: all clean glide-check
+
+all: glide-check $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
+
+glide-check:
+	@if [ -z "$(GLIDE_ROOT)" ]; then \
+	    echo ""; \
+	    echo "ERROR: GLIDE_ROOT is not set."; \
+	    echo "Usage: smake -f Makefile.irixfx GLIDE_ROOT=/path/to/glide_irix"; \
+	    echo ""; \
+	    exit 1; \
+	fi
+
+$(LIBDIR)/$(GL_LIB): $(OBJECTS)
+	-mkdir $(LIBDIR)
+	ar -rcv $(GL_LIB) $(OBJECTS)
+	mv $(GL_LIB) $(LIBDIR)/$(GL_LIB)
+	@echo ""
+	@echo "  Built: $(LIBDIR)/$(GL_LIB)"
+
+$(LIBDIR)/$(GLU_LIB): $(GLU_OBJECTS)
+	-mkdir $(LIBDIR)
+	ar -rcv $(GLU_LIB) $(GLU_OBJECTS)
+	mv $(GLU_LIB) $(LIBDIR)/$(GLU_LIB)
+	@echo ""
+	@echo "  Built: $(LIBDIR)/$(GLU_LIB)"
+
+$(LIBDIR)/$(GLUT_LIB): $(GLUT_OBJECTS)
+	-mkdir $(LIBDIR)
+	ar -rcv $(GLUT_LIB) $(GLUT_OBJECTS)
+	mv $(GLUT_LIB) $(LIBDIR)/$(GLUT_LIB)
+	@echo ""
+	@echo "  Built: $(LIBDIR)/$(GLUT_LIB)"
+
+clean:
+	rm -f $(OBJECTS) $(GL_LIB) $(LIBDIR)/$(GL_LIB)
+	rm -f $(GLU_OBJECTS) $(GLU_LIB) $(LIBDIR)/$(GLU_LIB)
+	rm -f $(GLUT_OBJECTS) $(GLUT_LIB) $(LIBDIR)/$(GLUT_LIB)
+
+# --------------------------------------------------------------------------
+# Compile rules
+# IRIX make cannot apply the .c.o suffix rule to subdirectory sources,
+# so each subdirectory requires an explicit rule.
+# Top-level .c files are handled by the suffix rule below.
+# --------------------------------------------------------------------------
+.c.o:
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+
+math/m_debug_clip.o: math/m_debug_clip.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+math/m_debug_norm.o: math/m_debug_norm.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+math/m_debug_vertex.o: math/m_debug_vertex.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+math/m_debug_xform.o: math/m_debug_xform.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+math/m_eval.o: math/m_eval.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+math/m_matrix.o: math/m_matrix.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+math/m_translate.o: math/m_translate.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+math/m_vector.o: math/m_vector.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+math/m_vertices.o: math/m_vertices.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+math/m_xform.o: math/m_xform.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+
+array_cache/ac_context.o: array_cache/ac_context.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+array_cache/ac_import.o: array_cache/ac_import.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+
+swrast/s_aaline.o: swrast/s_aaline.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_aatriangle.o: swrast/s_aatriangle.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_accum.o: swrast/s_accum.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_alpha.o: swrast/s_alpha.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_alphabuf.o: swrast/s_alphabuf.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_bitmap.o: swrast/s_bitmap.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_blend.o: swrast/s_blend.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_buffers.o: swrast/s_buffers.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_copypix.o: swrast/s_copypix.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_context.o: swrast/s_context.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_depth.o: swrast/s_depth.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_drawpix.o: swrast/s_drawpix.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_feedback.o: swrast/s_feedback.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_fog.o: swrast/s_fog.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_histogram.o: swrast/s_histogram.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_imaging.o: swrast/s_imaging.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_lines.o: swrast/s_lines.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_logic.o: swrast/s_logic.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_masking.o: swrast/s_masking.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_pb.o: swrast/s_pb.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_pixeltex.o: swrast/s_pixeltex.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_points.o: swrast/s_points.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_readpix.o: swrast/s_readpix.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_scissor.o: swrast/s_scissor.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_span.o: swrast/s_span.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_stencil.o: swrast/s_stencil.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_texture.o: swrast/s_texture.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_texstore.o: swrast/s_texstore.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_triangle.o: swrast/s_triangle.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast/s_zoom.o: swrast/s_zoom.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+
+swrast_setup/ss_context.o: swrast_setup/ss_context.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast_setup/ss_triangle.o: swrast_setup/ss_triangle.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast_setup/ss_vb.o: swrast_setup/ss_vb.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+swrast_setup/ss_interp.o: swrast_setup/ss_interp.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+
+tnl/t_array_api.o: tnl/t_array_api.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_array_import.o: tnl/t_array_import.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_context.o: tnl/t_context.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_eval_api.o: tnl/t_eval_api.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_imm_alloc.o: tnl/t_imm_alloc.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_imm_api.o: tnl/t_imm_api.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_imm_debug.o: tnl/t_imm_debug.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_imm_dlist.o: tnl/t_imm_dlist.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_imm_elt.o: tnl/t_imm_elt.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_imm_eval.o: tnl/t_imm_eval.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_imm_exec.o: tnl/t_imm_exec.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_imm_fixup.o: tnl/t_imm_fixup.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_pipeline.o: tnl/t_pipeline.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_vb_fog.o: tnl/t_vb_fog.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_vb_light.o: tnl/t_vb_light.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_vb_normals.o: tnl/t_vb_normals.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_vb_points.o: tnl/t_vb_points.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_vb_render.o: tnl/t_vb_render.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_vb_texgen.o: tnl/t_vb_texgen.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_vb_texmat.o: tnl/t_vb_texmat.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+tnl/t_vb_vertex.o: tnl/t_vb_vertex.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+
+FX/fxapi.o: FX/fxapi.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+FX/fxdd.o: FX/fxdd.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+FX/fxddspan.o: FX/fxddspan.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+FX/fxddtex.o: FX/fxddtex.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+FX/fxsetup.o: FX/fxsetup.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+FX/fxtexman.o: FX/fxtexman.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+FX/fxtris.o: FX/fxtris.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+FX/fxvb.o: FX/fxvb.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+FX/fxglidew.o: FX/fxglidew.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+
+# --------------------------------------------------------------------------
+# GLU compile rules (explicit — IRIX make cannot handle ../subdir/*.o)
+# Sources live in ../src-glu/; private headers resolved via -I$(GLU_SRCDIR)
+# --------------------------------------------------------------------------
+$(GLU_SRCDIR)/glu.o: $(GLU_SRCDIR)/glu.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/mipmap.o: $(GLU_SRCDIR)/mipmap.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/nurbs.o: $(GLU_SRCDIR)/nurbs.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/nurbscrv.o: $(GLU_SRCDIR)/nurbscrv.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/nurbssrf.o: $(GLU_SRCDIR)/nurbssrf.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/nurbsutl.o: $(GLU_SRCDIR)/nurbsutl.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/polytest.o: $(GLU_SRCDIR)/polytest.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/project.o: $(GLU_SRCDIR)/project.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/quadric.o: $(GLU_SRCDIR)/quadric.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/tess.o: $(GLU_SRCDIR)/tess.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+$(GLU_SRCDIR)/tesselat.o: $(GLU_SRCDIR)/tesselat.c
+	$(CC) -c $(GLU_CFLAGS) $< -o $@
+
+# --------------------------------------------------------------------------
+# GLUT compile rule
+# --------------------------------------------------------------------------
+$(GLUT_SRCDIR)/glut_fxmesa.o: $(GLUT_SRCDIR)/glut_fxmesa.c
+	$(CC) -c $(GLUT_CFLAGS) $< -o $@

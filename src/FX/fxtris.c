@@ -143,7 +143,7 @@ static struct
    points_func points;
    line_func line;
    triangle_func triangle;
-   quad_func quad;
+   quad_func quadfunc;
 }
 rast_tab[FX_MAX_TRIFUNC];
 
@@ -608,7 +608,7 @@ fxDDChooseRenderState(GLcontext * ctx)
    tnl->Driver.PointsFunc = rast_tab[index].points;
    tnl->Driver.LineFunc = rast_tab[index].line;
    tnl->Driver.TriangleFunc = rast_tab[index].triangle;
-   tnl->Driver.QuadFunc = rast_tab[index].quad;
+   tnl->Driver.QuadFunc = rast_tab[index].quadfunc;
    fxMesa->render_index = index;
 
    if (fxMesa->render_index == 0) {
