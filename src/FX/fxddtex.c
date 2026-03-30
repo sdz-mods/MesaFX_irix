@@ -364,6 +364,15 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
 
    ASSERT(!table->FloatTable);
 
+#define STORE_PALETTE_ENTRY(_idx, _r, _g, _b, _a)            \
+   do {                                                      \
+      GLubyte *dst = (GLubyte *) &data[_idx];                \
+      dst[0] = (GLubyte) (_b);                               \
+      dst[1] = (GLubyte) (_g);                               \
+      dst[2] = (GLubyte) (_r);                               \
+      dst[3] = (GLubyte) (_a);                               \
+   } while (0)
+
    switch (table->Format) {
    case GL_INTENSITY:
       for (i = 0; i < width; i++) {
@@ -371,7 +380,7 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
 	 g = tableUB[i];
 	 b = tableUB[i];
 	 a = tableUB[i];
-	 data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+	 STORE_PALETTE_ENTRY(i, r, g, b, a);
       }
       break;
    case GL_LUMINANCE:
@@ -380,21 +389,21 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
 	 g = tableUB[i];
 	 b = tableUB[i];
 	 a = 255;
-	 data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+	 STORE_PALETTE_ENTRY(i, r, g, b, a);
       }
       break;
    case GL_ALPHA:
       for (i = 0; i < width; i++) {
 	 r = g = b = 255;
 	 a = tableUB[i];
-	 data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+	 STORE_PALETTE_ENTRY(i, r, g, b, a);
       }
       break;
    case GL_LUMINANCE_ALPHA:
       for (i = 0; i < width; i++) {
 	 r = g = b = tableUB[i * 2 + 0];
 	 a = tableUB[i * 2 + 1];
-	 data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+	 STORE_PALETTE_ENTRY(i, r, g, b, a);
       }
       break;
    case GL_RGB:
@@ -403,7 +412,7 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
 	 g = tableUB[i * 3 + 1];
 	 b = tableUB[i * 3 + 2];
 	 a = 255;
-	 data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+	 STORE_PALETTE_ENTRY(i, r, g, b, a);
       }
       break;
    case GL_RGBA:
@@ -412,10 +421,12 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
 	 g = tableUB[i * 4 + 1];
 	 b = tableUB[i * 4 + 2];
 	 a = tableUB[i * 4 + 3];
-	 data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+	 STORE_PALETTE_ENTRY(i, r, g, b, a);
       }
       break;
    }
+
+#undef STORE_PALETTE_ENTRY
 }
 
 
@@ -1087,9 +1098,10 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB16:
       return &_mesa_texformat_rgb565;
    case 4:
+      return &_mesa_texformat_argb4444;
    case GL_RGBA:
-   case GL_RGBA2:
    case GL_RGBA4:
+   case GL_RGBA2:
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:

@@ -43,6 +43,18 @@
 
 #define DEBUG_TEXUTIL 0
 
+/* SGI/IRIX big-endian fix: Voodoo DMA is little-endian, so swap the
+ * 32-bit dword that holds two packed 16-bit texels before storing. */
+#ifdef __sgi
+#  define FX_TEXDWORD_SWAP(x) \
+        (((x) >> 24) | (((x) >> 8) & 0xFF00) | (((x) & 0xFF00) << 8) | ((x) << 24))
+#  define FX_TEXEL16_SWAP(x) \
+        (GLushort)((((GLuint)(x) >> 8) & 0x00ff) | ((((GLuint)(x) & 0x00ff)) << 8))
+#else
+#  define FX_TEXDWORD_SWAP(x) (x)
+#  define FX_TEXEL16_SWAP(x) (x)
+#endif
+
 
 struct gl_texture_convert {
    GLint xoffset, yoffset, zoffset;	/* Subimage offset */
@@ -291,6 +303,12 @@ convert_texsubimage3d_rgb888( struct gl_texture_convert *convert )
 #define TAG(x) x##_abgr8888_to_rgb565
 #include "texutil_tmp.h"
 
+#ifdef __sgi
+#define FX_FORCE_RGB565_STRIDE	index |= CONVERT_STRIDE_BIT;
+#else
+#define FX_FORCE_RGB565_STRIDE
+#endif
+
 
 #define CONVERT_RGB565( name )						\
 static GLboolean							\
@@ -308,11 +326,13 @@ convert_##name##_rgb565( struct gl_texture_convert *convert )		\
 	     convert->type == GL_UNSIGNED_BYTE )			\
    {									\
       tab = name##_tab_bgr888_to_rgb565;				\
+      FX_FORCE_RGB565_STRIDE						\
    }									\
    else if ( convert->format == GL_RGBA &&				\
 	     convert->type == GL_UNSIGNED_BYTE )			\
    {									\
       tab = name##_tab_abgr8888_to_rgb565;				\
+      FX_FORCE_RGB565_STRIDE						\
    }									\
    else									\
    {									\
@@ -336,7 +356,7 @@ CONVERT_RGB565( texsubimage3d )
 #define DST_TEXELS_PER_DWORD	2
 
 #define CONVERT_TEXEL( dst, src )					\
-	dst = PACK_COLOR_4444( src[3], src[0], src[1], src[2] )
+	dst = FX_TEXEL16_SWAP( PACK_COLOR_4444( src[3], src[0], src[1], src[2] ) )
 
 #define CONVERT_DIRECT
 
@@ -351,13 +371,20 @@ CONVERT_RGB565( texsubimage3d )
 	dst = PACK_COLOR_4444( src[3], src[0], src[1], src[2] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-	dst = ((PACK_COLOR_4444( src[3], src[0], src[1], src[2] )) |	\
-	       (PACK_COLOR_4444( src[7], src[4], src[5], src[6] ) << 16))
+	dst = FX_TEXDWORD_SWAP(					\
+	       ((PACK_COLOR_4444( src[3], src[0], src[1], src[2] )) |	\
+	        (PACK_COLOR_4444( src[7], src[4], src[5], src[6] ) << 16)))
 
 #define SRC_TEXEL_BYTES		4
 
 #define TAG(x) x##_abgr8888_to_argb4444
 #include "texutil_tmp.h"
+
+#ifdef __sgi
+#define FX_FORCE_RGBA16_STRIDE	index |= CONVERT_STRIDE_BIT;
+#else
+#define FX_FORCE_RGBA16_STRIDE
+#endif
 
 
 #define CONVERT_ARGB4444( name )					\
@@ -372,13 +399,14 @@ convert_##name##_argb4444( struct gl_texture_convert *convert )		\
    {									\
       tab = name##_tab_argb4444_direct;					\
    }									\
-   else if ( convert->format == GL_RGBA &&				\
+    else if ( convert->format == GL_RGBA &&				\
 	     convert->type == GL_UNSIGNED_BYTE )			\
-   {									\
+    {									\
       tab = name##_tab_abgr8888_to_argb4444;				\
-   }									\
-   else									\
-   {									\
+      FX_FORCE_RGBA16_STRIDE						\
+    }									\
+    else									\
+    {									\
       /* Can't handle this source format/type combination */		\
       return GL_FALSE;							\
    }									\
@@ -399,7 +427,7 @@ CONVERT_ARGB4444( texsubimage3d )
 #define DST_TEXELS_PER_DWORD	2
 
 #define CONVERT_TEXEL( dst, src )					\
-	dst = PACK_COLOR_1555( src[3], src[0], src[1], src[2] )
+	dst = FX_TEXEL16_SWAP( PACK_COLOR_1555( src[3], src[0], src[1], src[2] ) )
 
 #define CONVERT_DIRECT
 
@@ -430,8 +458,9 @@ CONVERT_ARGB4444( texsubimage3d )
 	dst = PACK_COLOR_1555( src[3], src[0], src[1], src[2] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-	dst = ((PACK_COLOR_1555( src[3], src[0], src[1], src[2] )) |	\
-	       (PACK_COLOR_1555( src[7], src[4], src[5], src[6] ) << 16))
+	dst = FX_TEXDWORD_SWAP(					\
+	       ((PACK_COLOR_1555( src[3], src[0], src[1], src[2] )) |	\
+	        (PACK_COLOR_1555( src[7], src[4], src[5], src[6] ) << 16)))
 
 #define SRC_TEXEL_BYTES		4
 
@@ -456,13 +485,14 @@ convert_##name##_argb1555( struct gl_texture_convert *convert )		\
    {									\
       tab = name##_tab_rgba5551_to_argb1555;				\
    }									\
-   else if ( convert->format == GL_RGBA &&				\
+    else if ( convert->format == GL_RGBA &&				\
 	     convert->type == GL_UNSIGNED_BYTE )			\
-   {									\
+    {									\
       tab = name##_tab_abgr8888_to_argb1555;				\
-   }									\
-   else									\
-   {									\
+      FX_FORCE_RGBA16_STRIDE						\
+    }									\
+    else									\
+    {									\
       /* Can't handle this source format/type combination */		\
       return GL_FALSE;							\
    }									\
